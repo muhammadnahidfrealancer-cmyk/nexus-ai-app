@@ -1,0 +1,67 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Prepare Web Directory
+        run: |
+          mkdir -p www
+          cp index.html style.css script.js icon.svg www/ || cp index.html style.css script.js www/
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Official Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Initialize Capacitor Engine
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Nexus AI" "com.nexus.ai.studio" --web-dir www
+          npx cap add android
+
+      - name: Inject Custom Quantum App Icons
+        run: |
+          sudo apt-get update && sudo apt-get install -y librsvg2-bin
+          if [ -f "icon.svg" ]; then
+            for size in 48:mdpi 72:hdpi 96:xhdpi 144:xxhdpi 192:xxxhdpi; do
+              dim="${size%%:*}"
+              folder="${size##*:}"
+              target_dir="android/app/src/main/res/mipmap-$folder"
+              mkdir -p "$target_dir"
+              rsvg-convert -w "$dim" -h "$dim" icon.svg -o "$target_dir/ic_launcher.png"
+              rsvg-convert -w "$dim" -h "$dim" icon.svg -o "$target_dir/ic_launcher_round.png"
+              rsvg-convert -w "$dim" -h "$dim" icon.svg -o "$target_dir/ic_launcher_foreground.png"
+            done
+          fi
+
+      - name: Build Production Signed APK with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Final APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nexus-AI-Official-App
+          path: android/app/build/outputs/apk/debug/app-debug.apk

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nexus Neural AI Studio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- টপ নেভিগেশন বার -->
+  <header class="app-header">
+    <div class="header-left">
+      <button id="btnOpenSidebar" class="icon-btn" title="Chat History">☰</button>
+      <div class="model-badge">
+        <span class="pulse-dot"></span>
+        <span class="model-name">Qwen 2.5 Coder 32B</span>
+        <span class="model-tag">ZERO-REFUSAL</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- ইউজার লগইন / প্রোফাইল বাটন -->
+      <button id="btnUserProfile" class="profile-chip-btn">
+        <span class="avatar-icon" id="userAvatar">👤</span>
+        <span class="user-tier-tag" id="userTierTag">FREE</span>
+      </button>
+      <button id="btnOpenSettings" class="icon-btn" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <!-- বাম পাশের চ্যাট হিস্ট্রি সাইডবার -->
+  <aside id="sidebarDrawer" class="sidebar-drawer">
+    <div class="sidebar-header">
+      <span class="sidebar-title">💬 Conversation History</span>
+      <button id="btnCloseSidebar" class="icon-btn">✕</button>
+    </div>
+    <div class="sidebar-action">
+      <button id="btnNewChat" class="btn-new-chat">＋ New Project Session</button>
+    </div>
+    <div id="chatHistoryList" class="history-list"></div>
+    <div class="sidebar-footer">
+      <button id="btnOpenSubscription" class="vip-upgrade-nav-btn">
+        <span>👑</span> Upgrade to Unlimited PRO
+      </button>
+    </div>
+  </aside>
+  <div id="drawerOverlay" class="drawer-overlay"></div>
+
+  <!-- মূল চ্যাট ভিউপোর্ট -->
+  <main class="chat-viewport" id="chatViewport">
+    <div class="welcome-screen" id="welcomeScreen">
+      <div class="welcome-logo">◈</div>
+      <h2>Nexus Autonomous AI Studio</h2>
+      <p>Powered by local Qwen 2.5 Coder 32B with Cloud Self-Healing.</p>
+    </div>
+    <div class="messages-container" id="messagesContainer"></div>
+  </main>
+
+  <!-- ক্লাউড / গুগল এআই স্টুডিও স্টাইল ফ্লোটিং প্রম্পট ডেক -->
+  <footer class="studio-prompt-footer">
+    <div class="studio-prompt-card">
+      
+      <!-- এটাচমেন্ট প্রিভিউ চিপস (ফাইল সিলেক্ট করলে দেখাবে) -->
+      <div id="attachedFilesBar" class="attached-files-bar" style="display: none;"></div>
+
+      <textarea id="promptInput" rows="1" placeholder="Type instructions, paste code, or describe software..."></textarea>
+      
+      <div class="prompt-action-row">
+        <div class="left-tools">
+          <!-- ফাইল এটাচ বাটন -->
+          <label class="tool-btn" title="Attach Files (Zip, Images, Video, Docs)">
+            📎
+            <input type="file" id="fileInput" multiple accept=".zip,.py,.js,.html,.json,.png,.jpg,.jpeg,.mp4,.pdf" hidden>
+          </label>
+          <!-- ভয়েস মাইক্রোফোন বাটন -->
+          <button type="button" id="btnVoiceMic" class="tool-btn" title="Voice Input (Speech-to-Text)">🎙️</button>
+          <!-- থিংকিং ইন্ডিকেটর -->
+          <span class="thinking-chip" id="thinkingIndicator">🧠 Deep Reasoning Active</span>
+        </div>
+        
+        <button id="btnSend" class="btn-send-studio" title="Execute Command">
+          <span>➤</span>
+        </button>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ==================== মোডালসমূহ ==================== -->
+
+  <!-- ১. লগইন / সাইন-ইন মোডাল (Google, Apple, GitHub) -->
+  <div id="authModal" class="modal-overlay">
+    <div class="modal-card auth-card">
+      <div class="modal-header">
+        <h3>Connect Your Account</h3>
+        <button id="btnCloseAuth" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="auth-desc">Sign in to sync project history, save Kaggle tokens, and manage PRO access.</p>
+        
+        <div class="oauth-buttons-list">
+          <button class="oauth-btn btn-google" data-provider="Google">
+            <span class="oauth-icon">🔴</span> Continue with Google
+          </button>
+          <button class="oauth-btn btn-apple" data-provider="Apple">
+            <span class="oauth-icon">🍏</span> Continue with Apple
+          </button>
+          <button class="oauth-btn btn-github" data-provider="GitHub">
+            <span class="oauth-icon">🐙</span> Continue with GitHub
+          </button>
+        </div>
+
+        <div class="auth-footer-note">
+          <small>Secure OAuth 2.0 Encrypted Gateway</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ২. সাবস্ক্রিপশন মোডাল -->
+  <div id="subscriptionModal" class="modal-overlay">
+    <div class="modal-card sub-card">
+      <div class="modal-header">
+        <h3>👑 Nexus Membership Tiers</h3>
+        <button id="btnCloseSubscription" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="plans-grid">
+          
+          <div class="plan-card">
+            <div class="plan-badge">FREE TIER</div>
+            <h4>Community</h4>
+            <div class="plan-price">$0</div>
+            <ul>
+              <li>✓ Local Kaggle 32B Models</li>
+              <li>✓ 30 Mins Daily Compute</li>
+              <li>✕ Cloud Auto-Rescue</li>
+            </ul>
+            <button class="plan-btn" id="btnActiveFree" disabled>CURRENT TIER</button>
+          </div>
+
+          <div class="plan-card featured-plan">
+            <div class="plan-badge gold">RECOMMENDED</div>
+            <h4>Pro Architect</h4>
+            <div class="plan-price">$19 <span>/mo</span></div>
+            <ul>
+              <li>✓ <b>Unlimited 24/7 Execution</b></li>
+              <li>✓ <b>DeepSeek-R1 Autonomous Rescue</b></li>
+              <li>✓ Multi-File Zip Packaging</li>
+            </ul>
+            <button class="plan-btn gold-btn" id="btnUpgradePro">Upgrade to PRO</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ৩. সেটিংস ও সিক্রেট এপিআই ভল্ট মোডাল -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="secretTapHeader" title="Tap 5 times to Unlock/Lock Vault">⚙️ Settings</h3>
+        <button id="btnCloseSettings" class="icon-btn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="setting-item">
+          <label>Primary AI Brain (Local)</label>
+          <input type="text" value="Qwen-2.5-Coder-32B-Instruct (Abliterated)" readonly class="custom-input disabled-look">
+          <small>Runs in your Kaggle 2x T4 GPU cluster.</small>
+        </div>
+
+        <div class="setting-item">
+          <label for="toggleThinking">Autonomous Chain-of-Thought (Thinking)</label>
+          <input type="checkbox" id="toggleThinking" class="toggle-checkbox" checked>
+        </div>
+
+        <div class="setting-item">
+          <label for="cloudFallbackSelect">Background Cloud Rescue Engine (Fallback)</label>
+          <select id="cloudFallbackSelect" class="custom-select">
+            <option value="deepseek-r1">DeepSeek-R1:free (Reasoning Master)</option>
+            <option value="gpt-4o">OpenAI GPT-4o (GitHub Models)</option>
+            <option value="llama-70b">Meta Llama-3.3-70B:free</option>
+          </select>
+          <small>Called automatically only if Kaggle model fails 5 times.</small>
+        </div>
+
+        <!-- সিক্রেট এপিআই ভল্ট (লক / আনলক অপশন সহ) -->
+        <div id="secretApiVault" class="secret-vault locked">
+          <div class="vault-locked-notice">
+            <span>🔒 Developer Tunnel Vault (Locked)</span>
+            <small>Tap 'Settings' title 5 times with password '1234'</small>
+          </div>
+          
+          <div class="vault-inputs" id="vaultInputs">
+            <div class="vault-tools-bar">
+              <span class="unlocked-tag">🔓 UNLOCKED</span>
+              <button type="button" id="btnLockVaultNow" class="btn-mini-lock">🔒 Lock Vault</button>
+            </div>
+
+            <div class="setting-item">
+              <label for="apiEndpointUrl">Kaggle Ngrok / Tunnel Base URL</label>
+              <input type="url" id="apiEndpointUrl" placeholder="https://xxxx.ngrok-free.app" class="custom-input">
+            </div>
+            <div class="setting-item">
+              <label for="apiSecretToken">Bearer Access Token (Optional)</label>
+              <input type="password" id="apiSecretToken" placeholder="Authorization Token" class="custom-input">
+            </div>
+          </div>
+        </div>
+
+        <button id="btnSaveSettings" class="save-settings-btn">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
